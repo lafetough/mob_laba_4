@@ -19,9 +19,11 @@ class DetailActivity : ComponentActivity() {
     private val client = OkHttpClient()
     private lateinit var carousel_view: RecyclerView
     private lateinit var carousel_adapter: CarouselAdapter
+    private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        db = AppDatabase.getDatabase(this)
 
         setContentView(R.layout.detail_activity_layout)
 
@@ -47,7 +49,13 @@ class DetailActivity : ComponentActivity() {
 
         client.newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                e.printStackTrace()
+                Thread {
+                    breedId?.let { db.breedDataDao().getBreedById(it) }?.let { breedData ->
+                        runOnUiThread {
+                            updateInterface(breedData)
+                        }
+                    }
+                }.start()
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -56,13 +64,23 @@ class DetailActivity : ComponentActivity() {
                     try {
                         val breedData : BreedData = gson.fromJson(responseBody, BreedData::class.java)
 
+                        Thread {
+                            db.breedDataDao().insert(breedData)
+                        }.start()
+
                         runOnUiThread {
                             updateInterface(breedData)
                         }
 
 
                     }catch (e: Exception) {
-                        e.printStackTrace()
+                        Thread {
+                            breedId?.let { db.breedDataDao().getBreedById(it) }?.let { breedData ->
+                                runOnUiThread {
+                                    updateInterface(breedData)
+                                }
+                            }
+                        }.start()
                     }
                 }
             }

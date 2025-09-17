@@ -3,6 +3,7 @@ package com.example.laba4
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
@@ -13,6 +14,7 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -20,9 +22,11 @@ class MainActivity : ComponentActivity() {
     private val gson = Gson()
     private lateinit var adapter: MainListAdapter
     private lateinit var breed_list_view: RecyclerView
+    private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        db = AppDatabase.getDatabase(this)
 
         setContentView(R.layout.main_screen_layout)
 
@@ -52,7 +56,12 @@ class MainActivity : ComponentActivity() {
 
         client.newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                e.printStackTrace()
+                Thread {
+                    val breeds = db.breedPreviewDao().getAllBreedPreviews()
+                    runOnUiThread {
+                        adapter.updateData(breeds)
+                    }
+                }.start()
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -62,13 +71,24 @@ class MainActivity : ComponentActivity() {
                         val listType = object :TypeToken<List<BreedPreview>>() {}.type
                         val breeds : List<BreedPreview> = gson.fromJson(responseBody, listType)
 
+                        Thread {
+                            for (breed in breeds) {
+                                db.breedPreviewDao().insert(breed)
+                            }
+                        }.start()
+
                         runOnUiThread {
                             adapter.updateData(breeds)
                         }
 
 
                     }catch (e: Exception) {
-                        e.printStackTrace()
+                        Thread {
+                            val breeds = db.breedPreviewDao().getAllBreedPreviews()
+                            runOnUiThread {
+                                adapter.updateData(breeds)
+                            }
+                        }.start()
                     }
                 }
             }
