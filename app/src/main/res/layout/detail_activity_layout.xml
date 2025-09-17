@@ -79,7 +79,17 @@
                     android:layout_height="wrap_content"
                     android:text="TextView" />
             </LinearLayout>
+
         </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/image_carousel"
+            android:layout_width="match_parent"
+            android:layout_height="400dp"
+            android:clipToPadding="false"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:scrollbars="horizontal" />
 
     </LinearLayout>
 

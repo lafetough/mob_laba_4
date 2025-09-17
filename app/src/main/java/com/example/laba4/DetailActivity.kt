@@ -3,6 +3,8 @@ package com.example.laba4
 import android.os.Bundle
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.Call
@@ -15,11 +17,23 @@ import java.io.IOException
 class DetailActivity : ComponentActivity() {
     private val gson = Gson()
     private val client = OkHttpClient()
+    private lateinit var carousel_view: RecyclerView
+    private lateinit var carousel_adapter: CarouselAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.detail_activity_layout)
+
+        carousel_view = findViewById(R.id.image_carousel)
+
+        carousel_view.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        carousel_view.setHasFixedSize(true)
+
+        val e_list: List<String> = emptyList()
+
+        carousel_adapter = CarouselAdapter(e_list)
+        carousel_view.adapter = carousel_adapter
 
         fetchData()
 
@@ -62,6 +76,7 @@ class DetailActivity : ComponentActivity() {
         findViewById<TextView>(R.id.breed_description).text = data.description
         findViewById<TextView>(R.id.breed_height).text = data.height
         findViewById<TextView>(R.id.breed_weight).text = data.weight
+        carousel_adapter.updateData(data.photos)
     }
 
 }
